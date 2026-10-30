@@ -1,14 +1,24 @@
-import { CustomJumbotron } from "@/components/custom/CustomJumbotron";
-import { HeroStats } from "@/heroes/components/HeroStats";
-import { SearchControls } from "../search/ui/SearchControls";
-import { HeroGrid } from "@/heroes/components/HeroGrid";
-import { CustomPagination } from "@/components/custom/CustomPagination";
-import { CustomBreadcrumbs } from "@/components/custom/CustomBreadcrumbs";
-import { getHeroesByPageAction } from "@/heroes/actions/get-heroes-by-page.action";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { CustomJumbotron } from '@/components/custom/CustomJumbotron';
+import { HeroStats } from '@/heroes/components/HeroStats';
+import { HeroGrid } from '@/heroes/components/HeroGrid';
+import { useMemo } from 'react';
+import { CustomPagination } from '@/components/custom/CustomPagination';
+import { CustomBreadcrumbs } from '@/components/custom/CustomBreadcrumbs';
 import { useQuery } from "@tanstack/react-query";
+import { getHeroesByPageAction } from '@/heroes/actions/get-heroes-by-page.action';
+import { useSearchParams } from 'react-router';
 
 export const HomePage = () => {
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = searchParams.get('tab') ?? 'all';
+
+  const selectedTab = useMemo(() => {
+    const validTabs = ['all', 'favorites', 'heroes', 'villains'];
+    return validTabs.includes(activeTab) ? activeTab : 'all';
+  }, [activeTab]);
 
   const { data } = useQuery({
     queryKey: ['heroes'],
@@ -16,23 +26,80 @@ export const HomePage = () => {
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
-  console.log({ data });
-
-  /*useEffect(() => {
-    getHeroesByPageAction();
-  }, []);*/
-
-
   return (
     <>
-      <CustomJumbotron title="Bienvenido a la App de Heroes" description="Aquí encontrarás todos los héroes que buscas." />
-      <CustomBreadcrumbs currentPage="Super Héroes" />
-      <HeroStats />
-      <SearchControls />
+      <>
+        {/* Header */}
+        <CustomJumbotron
+          title="Universo de SuperHéroes"
+          description="Descubre, explora y administra super héroes y villanos"
+        />
 
-      <HeroGrid heroes={data?.heroes ?? []} />
+        <CustomBreadcrumbs currentPage="Super Héroes" />
 
-      <CustomPagination totalPages={10} />
+        {/* Stats Dashboard */}
+        <HeroStats />
+
+        {/* Tabs */}
+        <Tabs value={selectedTab} className="mb-8">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all"
+              onClick={() => setSearchParams((prev) => {
+                prev.set('tab', 'all');
+                return prev;
+              })}>
+              All Characters (16)
+            </TabsTrigger>
+            <TabsTrigger
+              value="favorites"
+              className="flex items-center gap-2"
+              onClick={() => setSearchParams((prev) => {
+                prev.set('tab', 'favorites');
+                return prev;
+              })}>
+              Favorites (3)
+            </TabsTrigger>
+            <TabsTrigger value="heroes" onClick={() => setSearchParams((prev) => {
+              prev.set('tab', 'heroes');
+              return prev;
+            })}>
+              Heroes (12)
+            </TabsTrigger>
+            <TabsTrigger
+              value="villains"
+              onClick={() => setSearchParams((prev) => {
+                prev.set('tab', 'villains');
+                return prev;
+              })}
+            >
+              Villains (2)
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all">
+            {/* Mostrar todos los personajes */}
+            <HeroGrid heroes={data?.heroes ?? []} />
+          </TabsContent>
+          <TabsContent value="favorites">
+            {/* Mostrar todos los personajes favoritos */}
+            <h1>Favoritos!!!</h1>
+            <HeroGrid heroes={[]} />
+          </TabsContent>
+          <TabsContent value="heroes">
+            {/* Mostrar todos los héroes */}
+            <h1>Héroes</h1>
+            <HeroGrid heroes={[]} />
+          </TabsContent>
+          <TabsContent value="villains">
+            {/* Mostrar todos los Villanos */}
+            <h1>Villanos</h1>
+            <HeroGrid heroes={[]} />
+          </TabsContent>
+        </Tabs>
+
+        {/* Pagination */}
+        <CustomPagination totalPages={8} />
+      </>
     </>
   );
 };
